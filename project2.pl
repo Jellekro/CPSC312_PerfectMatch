@@ -19,16 +19,24 @@ callGS(Engaged) :-
 	findall(ID, female(ID), Females),
 	galeShapley(Males, Females, Engaged).
 
-galeShapley(_, [], []) :- print("No women -> No matches").
-galeShapley([], _, []) :- print("No men -> No matches").
-galeShapley(Males, Females, Engaged) :-
-	False.
+%galeShapley(_, [], []) :- print("No women -> No matches").
+%galeShapley([], _, []) :- print("No men -> No matches").
+%galeShapley(Males, Females, Engaged) :-
+%	False.
 
-failedMale([(MaleID, [Best|[]]) | RestMales], RestMales).
-failedMale([(MaleID, [Best|Rest]) | RestMales], Males1) :-
-	NewMale is (MaleID, Rest),
-	Males1 is [NewMale | RestMales].
+%?- successfulProposal([(p2, [(p3, 999999999),  (p4, 999999999)])],engaged{p3:(p1, [(p3, 7.47213595499958),  (p4, 999999999)])},Males1,Engaged1).
 
+successfulProposal([(MaleID, [FemaleID|Rest]) | RestMales], Engaged, Males1, Engaged1) :-
+	OtherGuy = Engaged.get(FemaleID),
+	del_dict(FemaleID,Engaged,_,EngagedTemp),
+	MalesTemp = [OtherGuy | RestMales],
+	failedMale(MalesTemp, Males1),
+	Engaged1 = EngagedTemp.put(FemaleID,(MaleID, [FemaleID|Rest])).
+
+
+% true if input males results in output males 
+failedMale([(MaleID, [Pref|[]]) | RestMales], RestMales).
+failedMale([(MaleID, [Pref|Rest]) | RestMales], [(MaleID, Rest) | RestMales]).
 
 %% Preparing Males for GS Algorithm
 getMalesInfo(Males) :-
