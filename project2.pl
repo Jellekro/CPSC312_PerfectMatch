@@ -24,6 +24,12 @@ galeShapley([], _, []) :- print("No men -> No matches").
 galeShapley(Males, Females, Engaged) :-
 	False.
 
+failedMale([(MaleID, [Best|[]]) | RestMales], RestMales).
+failedMale([(MaleID, [Best|Rest]) | RestMales], Males1) :-
+	NewMale is (MaleID, Rest),
+	Males1 is [NewMale | RestMales].
+
+
 %% Preparing Males for GS Algorithm
 getMalesInfo(Males) :-
 	findall(ID, male(ID), MaleIDs), 
