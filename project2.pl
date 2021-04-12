@@ -13,18 +13,57 @@
 
 % Iteration Over List of Men & List of Women to Create Scores
 
+% true if parameters for GS are obtained and GS algorithm is run
+callGS(Engaged) :-
+	getMalesInfo(Males),
+	findall(ID, female(ID), Females),
+	galeShapley(Males, Females, Engaged).
+
+galeShapley(_, [], []) :- print("No women -> No matches").
+galeShapley([], _, []) :- print("No men -> No matches").
+galeShapley(Males, Females, Engaged) :-
+	False.
+
+%% Preparing Males for GS Algorithm
+getMalesInfo(Males) :-
+	findall(ID, male(ID), MaleIDs), 
+	attachInfoToID(menPrefsSorted, blank, MaleIDs, Males).
+
+menPrefsSorted(ExtraInfo, MaleID, SortedPrefs) :-
+	menPrefs(MaleID, Prefs),
+	insertionSort(Prefs, SortedPrefs).
+
+%%% Citation: https://stackoverflow.com/questions/12715293/prolog-insertion-sort
+insert(X, [], [X]):- !.
+insert((FemaleID, Score), [(FemaleID1, Score1)|L1], [(FemaleID, Score), (FemaleID1, Score1)|L1]):- Score=<Score1, !.
+insert((FemaleID, Score), [(FemaleID1, Score1)|L1], [(FemaleID1, Score1)|L]):- insert((FemaleID, Score), L1, L).
+
+insertionSort([], []):- !.
+insertionSort([(FemaleID, Score)|L], S):- insertionSort(L, S1), insert((FemaleID, Score), S1, S).
+%%%
+
 menPrefs(MaleID, Prefs) :-
 	findall(ID, female(ID), Females), 
-	scoreFemales(transform, MaleID, Females, Prefs).
+	attachInfoToID(score, MaleID, Females, Prefs).
 
-scoreFemales(_, _, [], []).
-scoreFemales(P, M, [A|As], [B|Bs]) :-
-	call(P, M, A, B),
-	scoreFemales(P, M, As, Bs).
+attachInfoToID(_, _, [], []).
+attachInfoToID(P, M, [A|As], [B|Bs]) :-
+	pairWithIDInfo(P, M, A, B),
+	attachInfoToID(P, M, As, Bs).
 
-transform(MaleID, FemaleID, FemaleScore) :-
-	score(MaleID, FemaleID, Score),
-	FemaleScore = (FemaleID, Score).
+pairWithIDInfo(P, ExtraInfo, ID, Pair) :-
+	call(P, ExtraInfo, ID, Info),
+	Pair = (ID, Info).
+
+%pairWithIDInfo(score, MaleID, FemaleID, FemaleScore)
+%addFScore(MaleID, FemaleID, FemaleScore) :-
+	%score(MaleID, FemaleID, Score),
+	%FemaleScore = (FemaleID, Score).
+
+%pairWithIDInfo(menPrefsSorted, ExtraInfo, MaleID, Male)
+%addMPrefs(blank, MaleID, Male) :-
+	%menPrefsSorted(MaleID, SortedPrefs),
+	%Male = (MaleID, SortedPrefs).
 
 % true if ID belongs to a male profile
 male(ID) :- profile(ID, _, male, _, (_,_), _, (_,_), _, _).
@@ -34,7 +73,7 @@ female(ID) :- profile(ID, _, female, _, (_,_), _, (_,_), _, _).
 
 
 
-% Compatibility Scoring Functions (Soft & Hard Constraints)
+%% Compatibility Scoring Functions (Soft & Hard Constraints)
 
 % true if Result is the softscore Result or 999999999 if the hard constraints failed (a large number to fit our minimizer goal).
 score(MaleID, FemaleID, Result) :-
@@ -98,6 +137,6 @@ scoreStar(_,_,0).
 
 % The Database of Profiles of format: profile(ID, Name, Gender, Age, (MinAge,MaxAge), City, (Lat, Lon), Bio, Star_Sign)
 profile(p1, george, male, 21, (18,25), vancouver, (34,25), "I am George and I like tacos", pisces).
-profile(p2, barney, male, 35, (29,39), new_york, (900,342), "I am Barney and I like the beach", cancer). 
+profile(p2, barney, male, 35, (29,39), new_york, (900,342), "I am Barney and I like the beach", cancer).
 profile(p3, ashley, female, 24, (20,27), vancouver, (38, 27), "I am Ashley and I like running", taurus).
 profile(p4, jessica, female, 40, (35,42), new_york, (900, 342), "I am Jessica and I like tacos", aquarius).
